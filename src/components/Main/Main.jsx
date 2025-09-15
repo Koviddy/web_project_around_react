@@ -6,6 +6,8 @@ import { useState } from "react";
 import NewCard from "./components/Popup/components/NewCard/NewCard";
 import EditProfile from "./components/Popup/components/EditProfile/EditProfile";
 import EditAvatar from "./components/Popup/components/EditAvatar/EditAvatar";
+import Card from "./components/Card/Card";
+import ImagePopup from "./components/ImagePopup/ImagePopup";
 
 function Main() {
   const [popup, setPopup] = useState(null);
@@ -24,7 +26,26 @@ function Main() {
   function handleClosePopup() {
     setPopup(null);
   }
-  console.log(popup);
+
+  const cards = [
+    {
+      isLiked: false,
+      _id: "5d1f0611d321eb4bdcd707dd",
+      name: "Yosemite Valley",
+      link: "https://practicum-content.s3.us-west-1.amazonaws.com/web-code/moved_yosemite.jpg",
+      owner: "5d1f0611d321eb4bdcd707dd",
+      createdAt: "2019-07-05T08:10:57.741Z",
+    },
+    {
+      isLiked: false,
+      _id: "5d1f064ed321eb4bdcd707de",
+      name: "Lake Louise",
+      link: "https://practicum-content.s3.us-west-1.amazonaws.com/web-code/moved_lake-louise.jpg",
+      owner: "5d1f0611d321eb4bdcd707dd",
+      createdAt: "2019-07-05T08:11:58.324Z",
+    },
+  ];
+
   return (
     <>
       <section className="profile">
@@ -75,28 +96,16 @@ function Main() {
       </section>
 
       <section className="elements">
-        <ul className="elements__card elements"></ul>
-        <template id="template-card">
-          <li className="elements__li">
-            <button type="button" className="elements__trash">
-              <img
-                className="elements__button-trash"
-                src="./images/trash.png"
-                alt="ícone de lixeira"
-              />
-            </button>
-            <img className="elements__card-img" src="#" alt="" />
-            <div className="elements__card-text">
-              <p className="elements__card-name"></p>
-              <div className="elements__like">
-                <button
-                  type="button"
-                  className="elements__button-like"
-                ></button>
-              </div>
-            </div>
-          </li>
-        </template>
+        <ul className="elements__card elements">
+          {cards.map((card) => (
+            <Card
+              key={card._id}
+              card={card}
+              handleOpenPopup={handleOpenPopup}
+            />
+          ))}
+        </ul>
+        <template id="template-card"></template>
       </section>
       {popup && (
         <Popup onClose={handleClosePopup} title={popup.title}>

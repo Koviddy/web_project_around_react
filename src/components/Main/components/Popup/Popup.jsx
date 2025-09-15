@@ -4,7 +4,7 @@ export default function Popup(props) {
   //children é o conteúdo de popup
   const { title, children, onClose } = props;
   return (
-    <div className="popup__container">
+    <div className={`popup__container ${!title ? "popup__container-img" : ""}`}>
       <button type="button" className="popup__close-icon" onClick={onClose}>
         <img
           className="popup__close-icon-img"
@@ -12,7 +12,7 @@ export default function Popup(props) {
           alt="ìcone para fechar o pop-up"
         />
       </button>
-      <h2 className="popup__title">{title}</h2>
+      {title && <h2 className="popup__title">{title}</h2>}
       {children}
     </div>
   );
