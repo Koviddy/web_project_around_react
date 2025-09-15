@@ -1,0 +1,175 @@
+.profile {
+  max-width: 880px;
+  margin: 0 auto;
+  padding-top: 36px;
+  font-family: Inter;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-direction: row;
+}
+
+.profile__view {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.profile__img {
+  width: 128px;
+  height: 128px;
+  vertical-align: middle;
+  border-radius: 50%;
+  margin: 0;
+  object-fit: cover;
+}
+.profile__description {
+  margin: 0;
+  margin-left: 20px;
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: baseline;
+  column-gap: 18px;
+}
+.profile__name {
+  margin: 0;
+  font-size: 42px;
+  line-height: 1.2;
+  font-weight: 500px;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.profile__job {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 400px;
+  grid-column-start: 1;
+  grid-row-start: 2;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.profile__edit-button {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  width: 24px;
+  height: 24px;
+  grid-column-start: 2;
+  grid-row-start: 1;
+  cursor: pointer;
+  transition: 0.2s;
+  opacity: 100%;
+}
+
+/* Avatar container for relative positioning */
+.profile__avatar-container {
+  position: relative;
+  display: inline-block;
+}
+
+/* Overlay for black opacity on hover */
+.profile__avatar-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 128px;
+  height: 128px;
+  background: rgba(0, 0, 0, 0.8);
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Center the pencil icon */
+.profile__avatar-pencil {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 26px;
+  height: 26px;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  transition: opacity 0.2s;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* Show overlay and icon on hover */
+.profile__avatar-container:hover .profile__avatar-overlay,
+.profile__avatar-container:hover .profile__avatar-pencil {
+  opacity: 1;
+}
+
+.profile__img {
+  cursor: pointer;
+  display: block;
+}
+
+.profile__edit-button-img {
+  margin: 0;
+  object-fit: cover;
+  background-color: black;
+}
+.profile__edit-button:hover {
+  opacity: 60%;
+  transition: 0.2s;
+}
+.profile__add-button {
+  margin: 0;
+  border-radius: 2px;
+  border: 2px white solid;
+  width: 150px;
+  height: 50px;
+  align-self: center;
+  cursor: pointer;
+  transition: 0.2s;
+  background-color: black;
+  opacity: 100%;
+}
+.profile__add-img {
+  margin: 0;
+}
+.profile__add-button:hover {
+  opacity: 60%;
+  transition: 0.2s;
+}
+@media screen and (max-width: 970px) {
+  .profile {
+    max-width: 600px;
+    flex-direction: column;
+  }
+  .profile__view {
+    row-gap: 30px;
+    flex-direction: column;
+    padding-bottom: 36px;
+  }
+  .profile__description {
+    row-gap: 14px;
+  }
+  .profile__description-job {
+    text-align: center;
+  }
+  .profile__add-button {
+    width: 282px;
+  }
+}
+
+@media screen and (max-width: 660px) {
+  .profile {
+    max-width: 320px;
+  }
+  .profile__description-name {
+    font-size: 22px;
+  }
+  .profile__description-job {
+    font-size: 14px;
+  }
+}
