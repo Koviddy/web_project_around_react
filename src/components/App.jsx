@@ -4,13 +4,11 @@ import Main from "./Main/Main";
 
 function App() {
   return (
-    <>
-      <section className="page">
-        <Header />
-        <Main />
-        <Footer />
-      </section>
-    </>
+    <section className="page">
+      <Header />
+      <Main />
+      <Footer />
+    </section>
   );
 }
 

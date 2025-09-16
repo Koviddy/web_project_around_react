@@ -9,6 +9,7 @@
 }
 .popup_opened {
   display: block;
+  background-color: rgba(0, 0, 0, 0.6);
 }
 .popup__container {
   position: absolute;
