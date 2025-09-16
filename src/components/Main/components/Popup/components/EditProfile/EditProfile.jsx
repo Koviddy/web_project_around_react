@@ -2,7 +2,6 @@ export default function EditProfile() {
   return (
     <form className="popup__form" novalidate>
       <fieldset className="popup__set">
-        <h2 className="popup__title">Editar perfil</h2>
         <label>
           <input
             id="name-input"

@@ -2,7 +2,6 @@ export default function NewCard() {
   return (
     <form className="popup__form popup__form_add" novalidate>
       <fieldset className="popup__set">
-        <h2 className="popup__title">Novo Local</h2>
         <label>
           <input
             id="title-input"

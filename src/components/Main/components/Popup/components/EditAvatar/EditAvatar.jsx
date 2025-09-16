@@ -2,7 +2,6 @@ export default function EditAvatar() {
   return (
     <form className="popup__form popup__form_avatar" novalidate>
       <fieldset className="popup__set">
-        <h2 className="popup__title">Atualizar a foto do perfil</h2>
         <label>
           <input
             id="avatar-url-input"
