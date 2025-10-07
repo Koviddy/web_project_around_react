@@ -1,0 +1,502 @@
+diff --git a/src/blocks/elements.css b/src/blocks/elements.css
+index 9d788d4..fb5d4cf 100644
+--- a/src/blocks/elements.css
++++ b/src/blocks/elements.css
+@@ -66,11 +66,22 @@
+     cursor: pointer;
+     transition: 0.2s;
+ }
++
+ .elements__button-like:hover {
+    opacity: 60%;
+ }
++
+ .elements__button-like_click {
+     background-image: url(../images/heart-full-icon.png);
++    border: 0;
++    margin: 0;
++    padding: 0;
++    background-color: white;
++    width: 21px;
++    height: 19px;
++    opacity: 100%;
++    cursor: pointer;
++    transition: 0.2s;
+ }
+ 
+ .elements__trash {
+diff --git a/src/components/App.jsx b/src/components/App.jsx
+index aa3a568..ee52eef 100644
+--- a/src/components/App.jsx
++++ b/src/components/App.jsx
+@@ -1,14 +1,142 @@
++import React, { useEffect, useState } from "react";
+ import Footer from "./Footer/Footer";
+ import Header from "./Header/Header";
+ import Main from "./Main/Main";
++import CurrentUserContext from "../contexts/CurrentUserContext";
++import { api } from "../utils/api";
+ 
+ function App() {
++  const [currentUser, setCurrentUser] = React.useState({});
++  const [popup, setPopup] = useState(null);
++  const [cards, setCards] = useState([]);
++
++  useEffect(() => {
++    (async () => {
++      await api.getUserInfo().then((data) => {
++        setCurrentUser(data);
++      });
++    })();
++  }, []);
++
++  useEffect(() => {
++    api
++      .getInitialCards()
++      .then((cardsData) => {
++        setCards(cardsData);
++      })
++      .catch((err) => {
++        console.log(err);
++      });
++  }, []);
++
++  async function handleCardLike(card) {
++    // Verificar mais uma vez se esse cartão já foi curtido
++    const isLiked = card.isLiked;
++
++    // Enviar uma solicitação para a API e obter os dados do cartão atualizados
++    if (isLiked) {
++      await api
++        .removeLike(card._id)
++        .then((newCard) => {
++          setCards((state) =>
++            state.map((currentCard) =>
++              currentCard._id === card._id ? newCard : currentCard
++            )
++          );
++        })
++        .catch((error) => console.error(error));
++      return;
++    }
++
++    await api
++      .addLike(card._id, !isLiked)
++      .then((newCard) => {
++        setCards((state) =>
++          state.map((currentCard) =>
++            currentCard._id === card._id ? newCard : currentCard
++          )
++        );
++      })
++      .catch((error) => console.error(error));
++  }
++
++  async function handleCardDelete(card) {
++    await api
++      .deleteCard(card._id)
++      .then(() => {
++        setCards((state) =>
++          state.filter((currentCard) => currentCard._id !== card._id)
++        );
++      })
++      .catch((error) => console.error(error));
++  }
++
++  const handleUpdateUser = (data) => {
++    (async () => {
++      await api
++        .updateUser(data)
++        .then((newData) => {
++          setCurrentUser(newData);
++          handleClosePopup();
++        })
++        .catch((error) => console.error(error));
++    })();
++  };
++
++  const handleUpdateAvatar = (data) => {
++    (async () => {
++      await api
++        .updateAvatar(data)
++        .then((newData) => {
++          setCurrentUser(newData);
++          handleClosePopup();
++        })
++        .catch((error) => console.error(error));
++    })();
++  };
++
++  const handleAddPlaceSubmit = (data) => {
++    (async () => {
++      await api
++        .addCard(data)
++        .then((newCard) => {
++          setCards([newCard, ...cards]);
++          handleClosePopup();
++        })
++        .catch((error) => console.error(error));
++    })();
++  };
++
++  const handleClosePopup = () => {
++    setPopup(null);
++  };
++
++  const handleOpenPopup = (popup) => {
++    setPopup(popup);
++  };
++
+   return (
+-    <section className="page">
+-      <Header />
+-      <Main />
+-      <Footer />
+-    </section>
++    <CurrentUserContext.Provider
++      value={{
++        currentUser,
++        handleUpdateUser,
++        handleUpdateAvatar,
++        handleAddPlaceSubmit,
++      }}
++    >
++      <section className="page">
++        <Header />
++        <Main
++          onOpenPopup={handleOpenPopup}
++          onClosePopup={handleClosePopup}
++          popup={popup}
++          cards={cards}
++          onCardLike={handleCardLike}
++          onCardDelete={handleCardDelete}
++        />
++        <Footer />
++      </section>
++    </CurrentUserContext.Provider>
+   );
+ }
+ 
+diff --git a/src/components/Main/Main.jsx b/src/components/Main/Main.jsx
+index f04c0be..646d831 100644
+--- a/src/components/Main/Main.jsx
++++ b/src/components/Main/Main.jsx
+@@ -1,16 +1,20 @@
+-import profilePicture from "../../images/profile-img.jpg";
+ import pencil from "../../images/pencil-icon.png";
+ import add from "../../images/add-button.png";
+ import Popup from "./components/Popup/Popup";
+-import { useState } from "react";
++import { useContext } from "react";
+ import NewCard from "./components/Popup/components/NewCard/NewCard";
+ import EditProfile from "./components/Popup/components/EditProfile/EditProfile";
+ import EditAvatar from "./components/Popup/components/EditAvatar/EditAvatar";
+ import Card from "./components/Card/Card";
+-import ImagePopup from "./components/ImagePopup/ImagePopup";
++import CurrentUserContext from "../../contexts/CurrentUserContext";
+ 
+-function Main() {
+-  const [popup, setPopup] = useState(null);
++function Main(props) {
++  const { onOpenPopup, onClosePopup, popup, cards, onCardLike, onCardDelete } =
++    props;
++
++  const {
++    currentUser: { name, about, avatar },
++  } = useContext(CurrentUserContext);
+ 
+   const newCardPopup = { title: "Novo Local", children: <NewCard /> };
+   const editProfile = { title: "Editar Perfil", children: <EditProfile /> };
+@@ -19,44 +23,17 @@ function Main() {
+     children: <EditAvatar />,
+   };
+ 
+-  function handleOpenPopup(popup) {
+-    setPopup(popup);
+-  }
+-
+-  function handleClosePopup() {
+-    setPopup(null);
+-  }
+-
+-  const cards = [
+-    {
+-      isLiked: false,
+-      _id: "5d1f0611d321eb4bdcd707dd",
+-      name: "Yosemite Valley",
+-      link: "https://practicum-content.s3.us-west-1.amazonaws.com/web-code/moved_yosemite.jpg",
+-      owner: "5d1f0611d321eb4bdcd707dd",
+-      createdAt: "2019-07-05T08:10:57.741Z",
+-    },
+-    {
+-      isLiked: false,
+-      _id: "5d1f064ed321eb4bdcd707de",
+-      name: "Lake Louise",
+-      link: "https://practicum-content.s3.us-west-1.amazonaws.com/web-code/moved_lake-louise.jpg",
+-      owner: "5d1f0611d321eb4bdcd707dd",
+-      createdAt: "2019-07-05T08:11:58.324Z",
+-    },
+-  ];
+-
+   return (
+     <>
+       <section className="profile">
+         <div className="profile__view">
+           <div
+             className="profile__avatar-container"
+-            onClick={() => handleOpenPopup(editAvatar)}
++            onClick={() => onOpenPopup(editAvatar)}
+           >
+             <img
+               className="profile__img"
+-              src={profilePicture}
++              src={avatar}
+               alt="Foto de perfil do usuário"
+             />
+             <div className="profile__avatar-overlay"></div>
+@@ -67,12 +44,12 @@ function Main() {
+             />
+           </div>
+           <div className="profile__description">
+-            <h2 className="profile__name">Jacques Coasteau</h2>
+-            <h2 className="profile__job">Explorador</h2>
++            <h2 className="profile__name">{name}</h2>
++            <h2 className="profile__job">{about}</h2>
+             <button
+               type="button"
+               className="profile__edit-button"
+-              onClick={() => handleOpenPopup(editProfile)}
++              onClick={() => onOpenPopup(editProfile)}
+             >
+               <img
+                 className="profile__edit-button-img"
+@@ -85,7 +62,7 @@ function Main() {
+         <button
+           type="button"
+           className="profile__add-button"
+-          onClick={() => handleOpenPopup(newCardPopup)}
++          onClick={() => onOpenPopup(newCardPopup)}
+         >
+           <img
+             className="profile__add-img"
+@@ -101,14 +78,16 @@ function Main() {
+             <Card
+               key={card._id}
+               card={card}
+-              handleOpenPopup={handleOpenPopup}
++              onOpenPopup={onOpenPopup}
++              onCardLike={onCardLike}
++              onCardDelete={onCardDelete}
+             />
+           ))}
+         </ul>
+         <template id="template-card"></template>
+       </section>
+       {popup && (
+-        <Popup onClose={handleClosePopup} title={popup.title}>
++        <Popup onClose={onClosePopup} title={popup.title}>
+           {popup.children}
+         </Popup>
+       )}
+diff --git a/src/components/Main/components/Card/Card.jsx b/src/components/Main/components/Card/Card.jsx
+index e25ada1..354c012 100644
+--- a/src/components/Main/components/Card/Card.jsx
++++ b/src/components/Main/components/Card/Card.jsx
+@@ -5,9 +5,26 @@ function Card(props) {
+   const { name, link, isLiked } = props.card;
+   const imagePopup = { children: <ImagePopup card={props.card} /> };
+ 
++  // Verificar se o usuário atual “curtiu” o cartão
++  const cardLikeButtonClassName = `${
++    isLiked ? "elements__button-like_click" : "elements__button-like"
++  }`;
++
++  const handleLikeClick = () => {
++    props.onCardLike(props.card);
++  };
++
++  const handleDeleteClick = () => {
++    props.onCardDelete(props.card);
++  };
++
+   return (
+     <li className="elements__li">
+-      <button type="button" className="elements__trash">
++      <button
++        type="button"
++        className="elements__trash"
++        onClick={handleDeleteClick}
++      >
+         <img
+           className="elements__button-trash"
+           src={trashIcon}
+@@ -27,9 +44,8 @@ function Card(props) {
+         <div className="elements__like">
+           <button
+             type="button"
+-            className={
+-              isLiked ? "elements__button-like_click" : "elements__button-like"
+-            }
++            onClick={handleLikeClick}
++            className={cardLikeButtonClassName}
+           ></button>
+         </div>
+       </div>
+diff --git a/src/components/Main/components/Popup/components/EditAvatar/EditAvatar.jsx b/src/components/Main/components/Popup/components/EditAvatar/EditAvatar.jsx
+index d9eff28..3e2f783 100644
+--- a/src/components/Main/components/Popup/components/EditAvatar/EditAvatar.jsx
++++ b/src/components/Main/components/Popup/components/EditAvatar/EditAvatar.jsx
+@@ -1,6 +1,30 @@
++import { useContext, useState } from "react";
++import CurrentUserContext from "../../../../../../contexts/CurrentUserContext";
++
+ export default function EditAvatar() {
++  const userContext = useContext(CurrentUserContext);
++  const { currentUser, handleUpdateAvatar } = userContext;
++
++  const [avatar, setAvatar] = useState(currentUser.avatar);
++
++  const handleAvatarChange = (event) => {
++    setAvatar(event.target.value);
++  };
++
++  function handleSubmit(e) {
++    e.preventDefault();
++
++    handleUpdateAvatar({
++      avatar: avatar,
++    });
++  }
++
+   return (
+-    <form className="popup__form popup__form_avatar" novalidate>
++    <form
++      className="popup__form popup__form_avatar"
++      novalidate
++      onSubmit={handleSubmit}
++    >
+       <fieldset className="popup__set">
+         <label>
+           <input
+@@ -10,6 +34,8 @@ export default function EditAvatar() {
+             className="popup__form-input popup__form-input_avatar"
+             name="avatar"
+             required
++            value={avatar}
++            onChange={handleAvatarChange}
+           />
+           <span className="avatar-url-input-error"></span>
+         </label>
+diff --git a/src/components/Main/components/Popup/components/EditProfile/EditProfile.jsx b/src/components/Main/components/Popup/components/EditProfile/EditProfile.jsx
+index 1d00ac4..3e0f8f8 100644
+--- a/src/components/Main/components/Popup/components/EditProfile/EditProfile.jsx
++++ b/src/components/Main/components/Popup/components/EditProfile/EditProfile.jsx
+@@ -1,6 +1,29 @@
++import { useContext, useState } from "react";
++import CurrentUserContext from "../../../../../../contexts/CurrentUserContext";
++
+ export default function EditProfile() {
++  const userContext = useContext(CurrentUserContext);
++  const { currentUser, handleUpdateUser } = userContext;
++
++  const [name, setName] = useState(currentUser.name);
++  const [description, setDescription] = useState(currentUser.about);
++
++  const handleNameChange = (event) => {
++    setName(event.target.value);
++  };
++
++  const handleDescriptionChange = (event) => {
++    setDescription(event.target.value);
++  };
++
++  const handleSubmit = (event) => {
++    event.preventDefault();
++
++    handleUpdateUser({ name, about: description });
++  };
++
+   return (
+-    <form className="popup__form" novalidate>
++    <form className="popup__form" novalidate onSubmit={handleSubmit}>
+       <fieldset className="popup__set">
+         <label>
+           <input
+@@ -12,6 +35,8 @@ export default function EditProfile() {
+             minlength="2"
+             maxlength="40"
+             required
++            value={name}
++            onChange={handleNameChange}
+           />
+           <span className="name-input-error"></span>
+         </label>
+@@ -25,6 +50,8 @@ export default function EditProfile() {
+             minlength="2"
+             maxlength="200"
+             required
++            value={description}
++            onChange={handleDescriptionChange}
+           />
+           <span className="about-input-error"></span>
+         </label>
+diff --git a/src/components/Main/components/Popup/components/NewCard/NewCard.jsx b/src/components/Main/components/Popup/components/NewCard/NewCard.jsx
+index 72fc94e..734722e 100644
+--- a/src/components/Main/components/Popup/components/NewCard/NewCard.jsx
++++ b/src/components/Main/components/Popup/components/NewCard/NewCard.jsx
+@@ -1,6 +1,36 @@
++import { useContext, useState } from "react";
++import CurrentUserContext from "../../../../../../contexts/CurrentUserContext";
++
+ export default function NewCard() {
++  const userContext = useContext(CurrentUserContext);
++  const { handleAddPlaceSubmit } = userContext;
++
++  const [name, setName] = useState("");
++  const [link, setLink] = useState("");
++
++  const handleNameChange = (event) => {
++    setName(event.target.value);
++  };
++
++  const handleLinkChange = (event) => {
++    setLink(event.target.value);
++  };
++
++  function handleSubmit(e) {
++    e.preventDefault();
++
++    handleAddPlaceSubmit({
++      name: name,
++      link: link,
++    });
++  }
++
+   return (
+-    <form className="popup__form popup__form_add" novalidate>
++    <form
++      className="popup__form popup__form_add"
++      novalidate
++      onSubmit={handleSubmit}
++    >
+       <fieldset className="popup__set">
+         <label>
+           <input
+@@ -12,6 +42,8 @@ export default function NewCard() {
+             minlength="2"
+             maxlength="30"
+             required
++            value={name}
++            onChange={handleNameChange}
+           />
+           <span className="title-input-error"></span>
+         </label>
+@@ -23,6 +55,8 @@ export default function NewCard() {
+             className="popup__form-input popup__form-input_link"
+             name="image"
+             required
++            value={link}
++            onChange={handleLinkChange}
+           />
+           <span className="url-input-error"></span>
+         </label>
