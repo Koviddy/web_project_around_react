@@ -5,9 +5,26 @@ function Card(props) {
   const { name, link, isLiked } = props.card;
   const imagePopup = { children: <ImagePopup card={props.card} /> };
 
+  // Verificar se o usuário atual “curtiu” o cartão
+  const cardLikeButtonClassName = `${
+    isLiked ? "elements__button-like_click" : "elements__button-like"
+  }`;
+
+  const handleLikeClick = () => {
+    props.onCardLike(props.card);
+  };
+
+  const handleDeleteClick = () => {
+    props.onCardDelete(props.card);
+  };
+
   return (
     <li className="elements__li">
-      <button type="button" className="elements__trash">
+      <button
+        type="button"
+        className="elements__trash"
+        onClick={handleDeleteClick}
+      >
         <img
           className="elements__button-trash"
           src={trashIcon}
@@ -27,9 +44,8 @@ function Card(props) {
         <div className="elements__like">
           <button
             type="button"
-            className={
-              isLiked ? "elements__button-like_click" : "elements__button-like"
-            }
+            onClick={handleLikeClick}
+            className={cardLikeButtonClassName}
           ></button>
         </div>
       </div>
